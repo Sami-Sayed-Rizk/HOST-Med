@@ -1,0 +1,2337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="نظام إدارة لوائح أسعار ومستشفيات اللوائح الخاصة">
+<meta name="theme-color" content="#1565c0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="مستشفيات اللوائح">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>نظام إدارة مستشفيات اللوائح الخاصة</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  body { background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%); min-height: 100vh; padding: 20px; }
+  
+  .header {
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+    color: white; padding: 25px; border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(21,101,192,0.3);
+    margin-bottom: 20px;
+  }
+  .header h1 { font-size: 28px; margin-bottom: 5px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+  
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white; padding: 20px; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-right: 4px solid #1565c0;
+  }
+  .stat-card .label { color: #666; font-size: 13px; margin-bottom: 8px; }
+  .stat-card .value { color: #1565c0; font-size: 28px; font-weight: bold; }
+  
+  .controls {
+    background: white; padding: 20px; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+  .controls-row {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .controls-row:last-child { margin-bottom: 0; }
+  
+  input, select, button, textarea {
+    padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 14px; outline: none; transition: all 0.3s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #1565c0; box-shadow: 0 0 0 3px rgba(21,101,192,0.1); }
+  
+  .btn {
+    background: #1565c0; color: white; border: none; cursor: pointer;
+    font-weight: bold; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn:hover { background: #0d47a1; transform: translateY(-2px); }
+  .btn-success { background: #2e7d32; }
+  .btn-success:hover { background: #1b5e20; }
+  .btn-danger { background: #c62828; }
+  .btn-danger:hover { background: #b71c1c; }
+  .btn-warning { background: #ef6c00; }
+  .btn-warning:hover { background: #e65100; }
+  .btn-info { background: #0277bd; }
+  .btn-info:hover { background: #01579b; }
+  .btn-purple { background: #6a1b9a; }
+  .btn-purple:hover { background: #4a148c; }
+  .btn-teal { background: #00796b; }
+  .btn-teal:hover { background: #004d40; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-xs { padding: 4px 8px; font-size: 11px; }
+  
+  .search-box { flex: 1; min-width: 250px; }
+  
+  .cards-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+  }
+  
+  .hospital-card {
+    background: white; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s;
+  }
+  .hospital-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+  
+  .card-header {
+    background: linear-gradient(135deg, #1565c0, #1976d2);
+    color: white; padding: 15px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-header h3 { font-size: 16px; flex: 1; }
+  .card-header .badge {
+    background: rgba(255,255,255,0.2); padding: 4px 10px;
+    border-radius: 12px; font-size: 12px;
+  }
+  
+  .card-body { padding: 15px 20px; }
+  .card-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+  .card-row:last-child { border-bottom: none; }
+  .card-row .label { color: #666; }
+  .card-row .value { font-weight: bold; color: #1565c0; }
+  
+  .discounts-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-top: 10px;
+  }
+  .discount-item {
+    background: #e3f2fd; padding: 8px; border-radius: 8px;
+    text-align: center;
+  }
+  .discount-item .d-label { font-size: 11px; color: #666; }
+  .discount-item .d-value { font-size: 16px; font-weight: bold; color: #1565c0; }
+  
+  .card-footer {
+    padding: 12px 20px; background: #f5f5f5;
+    display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+  }
+  .card-footer button { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+  
+  .notes-box {
+    background: #fff3e0; border-right: 3px solid #ef6c00;
+    padding: 10px; margin-top: 10px; border-radius: 6px;
+    font-size: 12px; color: #5d4037;
+  }
+  
+  /* قسم البنود المضافة في البطاقة */
+  .custom-section-card {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    border: 2px solid #9c27b0;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .custom-section-card label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #6a1b9a;
+    margin-bottom: 8px;
+  }
+  .custom-section-card select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #9c27b0;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .custom-section-card .btn-row {
+    display: flex;
+    gap: 6px;
+  }
+  .custom-section-card .btn-row button {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  
+  .modal {
+    background: white; border-radius: 15px; max-width: 1100px;
+    width: 100%; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    background: #1565c0; color: white; padding: 20px;
+    border-radius: 15px 15px 0 0;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .modal-header h2 { font-size: 20px; }
+  .close-btn {
+    background: rgba(255,255,255,0.2); border: none; color: white;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    font-size: 18px;
+  }
+  .modal-body { padding: 25px; }
+  
+  /* Tabs */
+  .tabs {
+    display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px;
+    background: #f5f5f5; border-radius: 10px 10px 0 0; overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 15px; text-align: center; cursor: pointer;
+    font-weight: bold; color: #666; border: none; background: none;
+    transition: all 0.3s; font-size: 13px; white-space: nowrap;
+  }
+  .tab:hover { background: #e3f2fd; }
+  .tab.active {
+    background: #1565c0; color: white;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  
+  .form-group { margin-bottom: 15px; }
+  .form-group label {
+    display: block; margin-bottom: 5px; font-weight: bold; color: #333;
+    font-size: 13px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  
+  .section-title {
+    background: #1565c0; color: white; padding: 10px 15px;
+    border-radius: 8px; margin: 15px 0 10px; font-size: 15px;
+    display: flex; align-items: center; gap: 8px; justify-content: space-between;
+  }
+  .subsection-title {
+    background: #e3f2fd; color: #1565c0; padding: 8px 12px;
+    border-radius: 6px; margin: 12px 0 8px; font-size: 14px;
+    font-weight: bold; border-right: 3px solid #1565c0;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  
+  /* الجداول الديناميكية */
+  .dynamic-table-container {
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+  .dynamic-table {
+    width: 100%; border-collapse: collapse;
+    background: white; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .dynamic-table th {
+    background: #1565c0; color: white; padding: 10px 8px;
+    font-size: 12px; text-align: center; font-weight: bold;
+  }
+  .dynamic-table td {
+    padding: 6px 8px; border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+  .dynamic-table input {
+    width: 100%; padding: 6px; border: 1px solid #ddd;
+    border-radius: 4px; font-size: 12px; text-align: center;
+  }
+  .dynamic-table input[readonly] {
+    background: #e3f2fd; color: #1565c0; font-weight: bold;
+  }
+  .dynamic-table tr:nth-child(even) { background: #f9f9f9; }
+  .dynamic-table .row-actions {
+    display: flex; gap: 4px; justify-content: center;
+  }
+  .dynamic-table .row-name {
+    font-weight: bold; text-align: right;
+  }
+  
+  .add-row-btn {
+    background: #4caf50; color: white; border: none;
+    padding: 8px 15px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; margin-top: 8px;
+  }
+  .add-row-btn:hover { background: #388e3c; }
+  
+  .modal-footer {
+    padding: 15px 25px; border-top: 1px solid #eee;
+    display: flex; gap: 10px; justify-content: flex-end;
+    position: sticky; bottom: 0; background: white;
+    border-radius: 0 0 15px 15px;
+  }
+  
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: #999;
+  }
+  .empty-state .icon { font-size: 60px; margin-bottom: 15px; }
+  
+  /* Detail Modal */
+  .detail-section {
+    background: #f5f5f5; padding: 15px; border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  .detail-table {
+    width: 100%; border-collapse: collapse; margin-top: 10px;
+    background: white; border-radius: 8px; overflow: hidden;
+  }
+  .detail-table th {
+    background: #1565c0; color: white; padding: 10px;
+    font-size: 13px; text-align: center;
+  }
+  .detail-table td {
+    padding: 8px 10px; border-bottom: 1px solid #eee;
+    text-align: center; font-size: 13px;
+  }
+  .detail-table tr:last-child td { border-bottom: none; }
+  .detail-table tr:nth-child(even) { background: #f9f9f9; }
+  
+  /* Instructions Modal Styles */
+  .instructions-content {
+    line-height: 1.8;
+  }
+  .instructions-content h3 {
+    color: #1565c0; margin: 20px 0 10px;
+    padding-bottom: 5px; border-bottom: 2px solid #e3f2fd;
+  }
+  .instructions-content h4 {
+    color: #0d47a1; margin: 15px 0 8px;
+  }
+  .instructions-content p {
+    margin-bottom: 10px; color: #333;
+  }
+  .instructions-content ul, .instructions-content ol {
+    margin: 10px 0; padding-right: 25px;
+  }
+  .instructions-content li {
+    margin-bottom: 8px; color: #444;
+  }
+  .instruction-box {
+    background: #e3f2fd; border-right: 4px solid #1565c0;
+    padding: 15px; border-radius: 8px; margin: 15px 0;
+  }
+  .instruction-box.warning {
+    background: #fff3e0; border-right-color: #ef6c00;
+  }
+  .instruction-box.success {
+    background: #e8f5e9; border-right-color: #2e7d32;
+  }
+  .instruction-box.danger {
+    background: #ffebee; border-right-color: #c62828;
+  }
+  .instruction-box.purple {
+    background: #f3e5f5; border-right-color: #6a1b9a;
+  }
+  .instruction-box.teal {
+    background: #e0f2f1; border-right-color: #00796b;
+  }
+  
+  .columns-table {
+    width: 100%; border-collapse: collapse; margin: 15px 0;
+    background: white; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .columns-table th {
+    padding: 12px; text-align: center; font-size: 13px;
+    color: white; font-weight: bold;
+  }
+  .columns-table td {
+    padding: 10px; text-align: center; font-size: 12px;
+    border-bottom: 1px solid #eee;
+  }
+  .columns-table tr:nth-child(even) { background: #f9f9f9; }
+  
+  .col-basic { background: #1565c0; }
+  .col-inpatient { background: #2e7d32; }
+  .col-surgery { background: #6a1b9a; }
+  .col-notes { background: #ef6c00; }
+  .col-custom { background: #00796b; }
+  
+  .step-number {
+    display: inline-block; width: 30px; height: 30px;
+    background: #1565c0; color: white; border-radius: 50%;
+    text-align: center; line-height: 30px; font-weight: bold;
+    margin-left: 10px;
+  }
+  
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px; margin: 20px 0;
+  }
+  .feature-card {
+    background: white; padding: 20px; border-radius: 10px;
+    border-right: 4px solid #1565c0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .feature-card .icon { font-size: 32px; margin-bottom: 10px; }
+  .feature-card h4 { color: #1565c0; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: #666; }
+  
+  /* Custom Sections Management */
+  .custom-section-item {
+    background: #f5f5f5; padding: 15px; border-radius: 10px;
+    margin-bottom: 15px; border-right: 4px solid #00796b;
+  }
+  .custom-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .custom-section-header h4 {
+    color: #00796b; margin: 0;
+  }
+  .custom-section-actions {
+    display: flex; gap: 5px;
+  }
+  .custom-section-content {
+    background: white; padding: 10px; border-radius: 6px;
+  }
+  .column-list, .row-list {
+    margin: 10px 0;
+  }
+  .column-item, .row-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px; background: #e0f2f1; margin-bottom: 5px;
+    border-radius: 6px;
+  }
+  .column-item span, .row-item span {
+    font-weight: bold; color: #00796b;
+  }
+  
+  .file-structure {
+    background: #263238;
+    color: #aed581;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    margin: 10px 0;
+    overflow-x: auto;
+    direction: ltr;
+    text-align: left;
+  }
+  .file-structure .comment { color: #78909c; }
+  .file-structure .header { color: #ffcc80; font-weight: bold; }
+  .file-structure .data { color: #80deea; }
+  
+  .footer-credits {
+    text-align: center;
+    padding: 15px;
+    margin-top: 30px;
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+    color: white;
+    border-radius: 10px;
+    font-size: 13px;
+    box-shadow: 0 2px 10px rgba(21,101,192,0.3);
+  }
+  .footer-credits .author {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  .footer-credits .dept {
+    opacity: 0.9;
+    font-size: 12px;
+  }
+  .footer-credits .date {
+    opacity: 0.8;
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  
+  .instructions-footer {
+    background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .instructions-footer .author {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  .instructions-footer .dept {
+    opacity: 0.9;
+    font-size: 12px;
+  }
+  .instructions-footer .date {
+    opacity: 0.8;
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  
+  @media (max-width: 768px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .discounts-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs { flex-wrap: wrap; }
+    .tab { font-size: 11px; padding: 10px 8px; }
+    .card-footer { flex-direction: column; }
+    .card-footer button { width: 100%; }
+    .dynamic-table { font-size: 11px; }
+    .dynamic-table th, .dynamic-table td { padding: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏥 نظام إدارة مستشفيات اللوائح الخاصة</h1>
+  <p>إدارة شاملة لبيانات المستشفيات ونسب الخصم والكشوف وخدمات الداخلي والعمليات والبنود المضافة</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="label">إجمالي المستشفيات</div>
+    <div class="value" id="totalCount">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">متوسط خصم الخارجى</div>
+    <div class="value" id="avgOutpatient">0%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">متوسط خصم الداخلى</div>
+    <div class="value" id="avgInpatient">0%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">البنود المضافة</div>
+    <div class="value" id="customSectionsCount">0</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="controls-row">
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 ابحث عن مستشفى بالاسم...">
+    <select id="filterCategory">
+      <option value="">كل الفئات</option>
+      <option value="عالية">عالية</option>
+      <option value="متوسطة">متوسطة</option>
+      <option value="عادية">عادية</option>
+    </select>
+    <select id="filterDiscount">
+      <option value="">كل نسب الخصم</option>
+      <option value="20">خصم ≥ 20%</option>
+      <option value="30">خصم ≥ 30%</option>
+      <option value="40">خصم ≥ 40%</option>
+      <option value="50">خصم ≥ 50%</option>
+    </select>
+  </div>
+  <div class="controls-row">
+    <button class="btn btn-success" onclick="openModal()">➕ إضافة مستشفى</button>
+    <button class="btn btn-teal" onclick="openCustomSectionsManager()">⚙️ إدارة البنود المضافة</button>
+    <button class="btn btn-warning" onclick="exportData()">📥 تصدير Excel</button>
+    <button class="btn btn-info" onclick="document.getElementById('importFile').click()">📤 استيراد Excel</button>
+    <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importData(event)">
+    <button class="btn btn-purple" onclick="openInstructions()">📖 التعليمات</button>
+    <button class="btn" onclick="resetData()">🔄 إعادة البيانات الأصلية</button>
+  </div>
+</div>
+
+<div class="cards-grid" id="cardsContainer"></div>
+
+<!-- Modal الإضافة/التعديل -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">إضافة مستشفى جديد</h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="hospitalId">
+      
+      <div class="tabs" id="mainTabs">
+        <button class="tab active" onclick="switchTab('basic', event)">📋 البيانات الأساسية</button>
+        <button class="tab" onclick="switchTab('inpatient', event)">🛏️ خدمات الداخلي</button>
+        <button class="tab" onclick="switchTab('surgery', event)">🏥 العمليات</button>
+      </div>
+      
+      <!-- Tab 1: Basic -->
+      <div class="tab-content active" id="tab-basic">
+        <div class="form-group">
+          <label>اسم المستشفى *</label>
+          <input type="text" id="hName" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>الفئة</label>
+            <select id="hCategory">
+              <option value="عالية">عالية</option>
+              <option value="متوسطة">متوسطة</option>
+              <option value="عادية">عادية</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>فترة الكشوف</label>
+            <input type="text" id="hPeriod" placeholder="مثل: 2022-2023">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>سعر الكشف (جنيه)</label>
+            <input type="number" id="hFee" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>نسبة الخصم على اللائحة %</label>
+            <input type="number" id="hListDiscount" step="0.1">
+          </div>
+        </div>
+        <h3 style="margin: 15px 0 10px; color: #1565c0;">📊 نسب الخصم الأساسية</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>الخارجي %</label>
+            <input type="number" id="dOutpatient" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>الداخلي %</label>
+            <input type="number" id="dInpatient" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>الإقامة %</label>
+            <input type="number" id="dAccommodation" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>الجراحين %</label>
+            <input type="number" id="dSurgeons" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>الأتعاب %</label>
+            <input type="number" id="dFees" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>الرعاية المركزة %</label>
+            <input type="number" id="dICU" step="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>ملاحظات</label>
+          <textarea id="hNotes" rows="3"></textarea>
+        </div>
+      </div>
+      
+      <!-- Tab 2: Inpatient Services -->
+      <div class="tab-content" id="tab-inpatient">
+        <div class="section-title">🛏️ خدمات الداخلي</div>
+        
+        <div class="subsection-title">
+          <span>🏨 الإقامة العادية / اليوم</span>
+          <button class="btn btn-xs btn-success" onclick="addInpatientRow('regular')">➕ إضافة بند</button>
+        </div>
+        <div id="regularItemsContainer"></div>
+        
+        <div class="subsection-title">
+          <span>🚑 العناية المركزة / اليوم</span>
+          <button class="btn btn-xs btn-success" onclick="addInpatientRow('icu')">➕ إضافة بند</button>
+        </div>
+        <div id="icuItemsContainer"></div>
+      </div>
+      
+      <!-- Tab 3: Surgeries -->
+      <div class="tab-content" id="tab-surgery">
+        <div class="section-title">🏥 العمليات - حسب المستوى</div>
+        <p style="color:#666; font-size:13px; margin-bottom:15px;">لكل مستوى: فتح غرفة العمليات | مستهلكات العملية | أجر الجراح | المساعد</p>
+        <div id="surgeryLevelsContainer"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-success" onclick="saveHospital()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal التفاصيل -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailTitle">تفاصيل المستشفى</h2>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeDetail()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal إدارة البنود المضافة -->
+<div class="modal-overlay" id="customSectionsOverlay">
+  <div class="modal" style="max-width: 1000px;">
+    <div class="modal-header" style="background: #00796b;">
+      <h2>⚙️ إدارة البنود المضافة</h2>
+      <button class="close-btn" onclick="closeCustomSectionsManager()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="instruction-box teal">
+        <h4>💡 كيفية استخدام البنود المضافة:</h4>
+        <p>يمكنك إنشاء بنود مخصصة (مثل: الأشعة، التحاليل، العلاج الطبيعي، إلخ) وكل بند يتكون من:</p>
+        <ul>
+          <li><strong>رؤوس أعمدة (تصنيفات)</strong>: مثل (عادي، خاص، VIP)</li>
+          <li><strong>رؤوس صفوف (إجراءات)</strong>: مثل (أشعة سينية، رنين مغناطيسي، إلخ)</li>
+          <li>كل تقاطع بين عمود وصف = <strong>مبلغ التكلفة + نسبة الخصم + مبلغ الخصم</strong></li>
+        </ul>
+      </div>
+      
+      <div style="margin: 20px 0;">
+        <button class="btn btn-teal" onclick="addNewCustomSection()">➕ إضافة بند جديد</button>
+      </div>
+      
+      <div id="customSectionsList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-teal" onclick="closeCustomSectionsManager()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal التعليمات -->
+<div class="modal-overlay" id="instructionsOverlay">
+  <div class="modal" style="max-width: 1000px;">
+    <div class="modal-header" style="background: #6a1b9a;">
+      <h2>📖 دليل استخدام النظام الشامل</h2>
+      <button class="close-btn" onclick="closeInstructions()">✕</button>
+    </div>
+    <div class="modal-body instructions-content">
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">📋</div>
+          <h4>البيانات الأساسية</h4>
+          <p>اسم المستشفى، الفئة، فترة الكشوف، سعر الكشف، نسب الخصم الأساسية</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🛏️</div>
+          <h4>خدمات الداخلي</h4>
+          <p>الإقامة العادية والمركزة مع إمكانية إضافة/حذف البنود</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🏥</div>
+          <h4>العمليات</h4>
+          <p>7 مستويات عمليات مع تفاصيل كل مستوى وإمكانية التعديل</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⚙️</div>
+          <h4>البنود المضافة</h4>
+          <p>إنشاء بنود مخصصة ديناميكياً حسب الحاجة</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📊</div>
+          <h4>التصدير والاستيراد</h4>
+          <p>تصدير واستيراد البيانات بصيغة Excel/CSV</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔍</div>
+          <h4>البحث والفلترة</h4>
+          <p>البحث المتقدم والفلاتر المتعددة</p>
+        </div>
+      </div>
+
+      <h3><span class="step-number">1</span>البيانات الأساسية</h3>
+      <div class="instruction-box">
+        <h4>📝 الحقول المطلوبة:</h4>
+        <ul>
+          <li><strong>اسم المستشفى</strong> (مطلوب): الاسم الكامل للمستشفى</li>
+          <li><strong>الفئة</strong>: عالية / متوسطة / عادية</li>
+          <li><strong>فترة الكشوف</strong>: مثل 2022-2023</li>
+          <li><strong>سعر الكشف</strong>: بالجنيه المصري</li>
+          <li><strong>خصم اللائحة</strong>: نسبة الخصم على لائحة الأسعار %</li>
+        </ul>
+      </div>
+      
+      <h4>📊 نسب الخصم الأساسية (6 بنود):</h4>
+      <table class="columns-table">
+        <tr>
+          <th class="col-basic">الخارجي %</th>
+          <th class="col-basic">الداخلي %</th>
+          <th class="col-basic">الإقامة %</th>
+          <th class="col-basic">الجراحين %</th>
+          <th class="col-basic">الأتعاب %</th>
+          <th class="col-basic">العناية المركزة %</th>
+        </tr>
+      </table>
+
+      <h3><span class="step-number">2</span>خدمات الداخلي 🛏️</h3>
+      <div class="instruction-box success">
+        <h4>🏨 الإقامة العادية / اليوم:</h4>
+        <ul>
+          <li>بنود افتراضية: سعر الإقامة، الإشراف الطبي، الاستشاري</li>
+          <li>كل بند: <strong>المبلغ + نسبة الخصم % + مبلغ الخصم (يُحسب تلقائياً)</strong></li>
+          <li>يمكن <strong>إضافة بنود جديدة</strong> بالضغط على "➕ إضافة بند"</li>
+          <li>يمكن <strong>حذف أي بند</strong> بالضغط على 🗑️</li>
+        </ul>
+      </div>
+      
+      <div class="instruction-box success">
+        <h4>🚑 العناية المركزة / اليوم:</h4>
+        <ul>
+          <li>بنود افتراضية: سعر الإقامة، الإشراف الطبي، الاستشاري</li>
+          <li>كل بند: <strong>المبلغ + نسبة الخصم % + مبلغ الخصم (يُحسب تلقائياً)</strong></li>
+          <li>يمكن <strong>إضافة بنود جديدة</strong> بالضغط على "➕ إضافة بند"</li>
+          <li>يمكن <strong>حذف أي بند</strong> بالضغط على 🗑️</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">3</span>العمليات 🏥</h3>
+      <div class="instruction-box purple">
+        <h4>7 مستويات للعمليات:</h4>
+        <p style="margin: 10px 0;">متقدمة 🔴 | طابع خاص 🟠 | مهارة 🟡 | كبرى 🟢 | متوسطة 🔵 | صغرى 🟣 | بسيطة 🔷</p>
+        <h4>لكل مستوى 4 بنود افتراضية:</h4>
+        <ul>
+          <li><strong>فتح غرفة العمليات</strong>: المبلغ + نسبة الخصم % + مبلغ الخصم</li>
+          <li><strong>مستهلكات العملية</strong>: المبلغ + نسبة الخصم % + مبلغ الخصم</li>
+          <li><strong>أجر الجراح</strong>: المبلغ + نسبة الخصم % + مبلغ الخصم</li>
+          <li><strong>المساعد</strong>: المبلغ + نسبة الخصم % + مبلغ الخصم</li>
+        </ul>
+        <h4>✏️ إمكانية التعديل:</h4>
+        <ul>
+          <li>يمكن <strong>إضافة بنود جديدة</strong> لكل مستوى</li>
+          <li>يمكن <strong>حذف أي بند</strong> غير مطلوب</li>
+          <li>مبلغ الخصم يُحسب تلقائياً = المبلغ × نسبة الخصم ÷ 100</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">4</span>البنود المضافة الديناميكية ⚙️</h3>
+      <div class="instruction-box teal">
+        <h4>🎯 ما هي البنود المضافة؟</h4>
+        <p>البنود المضافة هي أقسام مخصصة يمكنك إنشاؤها حسب احتياجك، مثل:</p>
+        <ul>
+          <li>📸 <strong>الأشعة</strong>: (أشعة سينية، رنين مغناطيسي، أشعة مقطعية، إلخ)</li>
+          <li>🧪 <strong>التحاليل</strong>: (تحاليل دم، بول، وظائف كبد، إلخ)</li>
+          <li>💊 <strong>العلاج الطبيعي</strong>: (جلسات، أجهزة، إلخ)</li>
+          <li>🦷 <strong>الأسنان</strong>: (حشو، خلع، تقويم، إلخ)</li>
+          <li>أو أي بند آخر تحتاجه!</li>
+        </ul>
+        
+        <h4>📐 هيكل البند المضاف:</h4>
+        <ul>
+          <li><strong>رؤوس الأعمدة (التصنيفات)</strong>: تقسيمات أفقية مثل (عادي، خاص، VIP)</li>
+          <li><strong>رؤوس الصفوف (الإجراءات)</strong>: الخدمات أو الإجراءات</li>
+          <li><strong>كل خلية</strong>: تحتوي على مبلغ التكلفة + نسبة الخصم % + مبلغ الخصم</li>
+        </ul>
+        
+        <h4>🛠️ كيفية إنشاء بند مضاف:</h4>
+        <ol>
+          <li>اضغط على زر <strong>"⚙️ إدارة البنود المضافة"</strong> في شريط التحكم</li>
+          <li>اضغط <strong>"➕ إضافة بند جديد"</strong></li>
+          <li>أدخل <strong>اسم البند</strong> (مثل: الأشعة)</li>
+          <li>أضف <strong>رؤوس الأعمدة</strong> (التصنيفات) مثل: عادي، خاص، VIP</li>
+          <li>أضف <strong>رؤوس الصفوف</strong> (الإجراءات) مثل: أشعة سينية، رنين مغناطيسي</li>
+          <li>اضغط <strong>"💾 حفظ البند"</strong></li>
+        </ol>
+        
+        <h4>🎛️ الوصول السريع من بطاقة المستشفى:</h4>
+        <p>في كل بطاقة مستشفى، ستجد <strong>قسم البنود المضافة</strong> بخلفية بنفسجية:</p>
+        <ul>
+          <li>اختر البند من القائمة المنسدلة</li>
+          <li>اضغط <strong>"👁️ عرض/تعديل"</strong> للانتقال مباشرة إلى البند</li>
+          <li>يمكنك <strong>تعديل</strong> القيم أو <strong>إضافة</strong> قيم جديدة</li>
+        </ul>
+        
+        <h4>✏️ تعديل أو حذف بند مضاف:</h4>
+        <ul>
+          <li>في نافذة إدارة البنود المضافة، اضغط <strong>"✏️ تعديل"</strong> لتغيير الاسم أو الأعمدة/الصفوف</li>
+          <li>اضغط <strong>"🗑️ حذف"</strong> لحذف البند (سيتم حذف بياناته من جميع المستشفيات)</li>
+          <li>⚠️ <strong>تنبيه</strong>: حذف البند سيحذف جميع البيانات المرتبطة به!</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">5</span>بناء ملف التصدير Excel 📥</h3>
+      <div class="instruction-box warning">
+        <h4>📋 هيكل ملف التصدير (CSV):</h4>
+        <p>يتم تصدير البيانات في ملف CSV بترميز UTF-8، ويتكون من:</p>
+        
+        <h4>🔵 القسم الأول - البيانات الأساسية (13 عمود):</h4>
+        <table class="columns-table">
+          <tr>
+            <th class="col-basic">م</th>
+            <th class="col-basic">اسم المستشفى</th>
+            <th class="col-basic">الفئة</th>
+            <th class="col-basic">الفترة</th>
+            <th class="col-basic">سعر الكشف</th>
+            <th class="col-basic">خصم اللائحة</th>
+            <th class="col-basic">خارجي</th>
+            <th class="col-basic">داخلي</th>
+            <th class="col-basic">إقامة</th>
+            <th class="col-basic">جراحين</th>
+            <th class="col-basic">أتعاب</th>
+            <th class="col-basic">عناية مركزة</th>
+            <th class="col-basic">ملاحظات</th>
+          </tr>
+        </table>
+        
+        <h4>🟢 القسم الثاني - خدمات الداخلي العادية (ديناميكي):</h4>
+        <p>لكل بند: <strong>الاسم، المبلغ، نسبة الخصم، مبلغ الخصم</strong></p>
+        
+        <h4>🟢 القسم الثالث - خدمات الداخلي المركزة (ديناميكي):</h4>
+        <p>لكل بند: <strong>الاسم، المبلغ، نسبة الخصم، مبلغ الخصم</strong></p>
+        
+        <h4>🟣 القسم الرابع - العمليات (ديناميكي لكل مستوى):</h4>
+        <p>لكل مستوى ولكل بند: <strong>الاسم، المبلغ، نسبة الخصم، مبلغ الخصم</strong></p>
+        
+        <h4>🟦 القسم الخامس - البنود المضافة (ديناميكي):</h4>
+        <p>يتم إضافة أعمدة لكل بند مضاف بالصيغة:</p>
+        <div class="file-structure">
+          <span class="comment"># لكل بند مضاف:</span><br>
+          <span class="header">[اسم البند]-[الإجراء]-[التصنيف]-سعر</span>,<br>
+          <span class="header">[اسم البند]-[الإجراء]-[التصنيف]-نسبة_خصم</span>,<br>
+          <span class="header">[اسم البند]-[الإجراء]-[التصنيف]-مبلغ_خصم</span>
+        </div>
+        
+        <h4>📊 مثال على صف بيانات في ملف التصدير:</h4>
+        <div class="file-structure">
+          <span class="comment"># صف بيانات مستشفى دار الفؤاد:</span><br>
+          <span class="data">13,"مستشفى دار الفؤاد",عالية,2020-2022,200,30,15,15,15,15,15,15,"10% قسم الأطفال",</span><br>
+          <span class="data">"سعر الإقامة",500,15,75,"الإشراف الطبي",200,15,30,"الاستشاري",300,15,45,</span><br>
+          <span class="data">"سعر الإقامة",1500,15,225,"الإشراف الطبي",400,15,60,"الاستشاري",500,15,75,</span><br>
+          <span class="data">"فتح غرفة العمليات",5000,20,1000,"مستهلكات",3000,20,600,"أجر الجراح",8000,20,1600,"المساعد",2000,20,400</span>
+        </div>
+      </div>
+
+      <h3><span class="step-number">6</span>بناء ملف الاستيراد المطلوب 📤</h3>
+      <div class="instruction-box success">
+        <h4>📝 مواصفات ملف الاستيراد:</h4>
+        <ul>
+          <li><strong>الصيغة</strong>: CSV (Comma Separated Values)</li>
+          <li><strong>الترميز</strong>: UTF-8 (ضروري للغة العربية)</li>
+          <li><strong>الفاصل</strong>: فصلة (,)</li>
+          <li><strong>النص</strong>: محاط بعلامات تنصيص مزدوجة ("")</li>
+        </ul>
+        
+        <h4>📐 هيكل الملف المطلوب:</h4>
+        <div class="file-structure">
+          <span class="comment">// السطر الأول: عناوين الأعمدة</span><br>
+          <span class="header">م,اسم المستشفى,الفئة,الفترة,سعر الكشف,خصم اللائحة,خارجي,داخلي,إقامة,جراحين,أتعاب,عناية مركزة,ملاحظات,...</span><br><br>
+          <span class="comment">// الأسطر التالية: بيانات المستشفيات</span><br>
+          <span class="data">1,"المركز الطبي",عالية,2022-2023,50,10,20,20,20,25,20,20,"ملاحظة",...</span><br>
+          <span class="data">2,"المستشفى الجوي",عالية,2022-2023,50,30,20,25,25,25,50,25,"",...</span>
+        </div>
+        
+        <h4>✅ خطوات الاستيراد الصحيحة:</h4>
+        <ol>
+          <li>اضغط <strong>"📥 تصدير Excel"</strong> للحصول على قالب فارغ</li>
+          <li>افتح الملف في Excel</li>
+          <li>عدّل البيانات حسب الحاجة</li>
+          <li>احفظ الملف بصيغة <strong>CSV (Comma delimited) (*.csv)</strong></li>
+          <li>تأكد من الترميز <strong>UTF-8</strong> عند الحفظ</li>
+          <li>اضغط <strong>"📤 استيراد Excel"</strong> واختر الملف</li>
+        </ol>
+        
+        <h4>⚠️ تنبيهات مهمة:</h4>
+        <ul>
+          <li>لا تغير ترتيب الأعمدة</li>
+          <li>لا تحذف أعمدة من الملف</li>
+          <li>يمكنك إضافة صفوف (مستشفيات) جديدة</li>
+          <li>الصف الأول يجب أن يبقى كما هو (عناوين)</li>
+          <li>استخدم علامات التنصيص للنصوص التي تحتوي على فواصل</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">7</span>البحث والفلترة 🔍</h3>
+      <div class="instruction-box">
+        <h4>🔎 خيارات البحث:</h4>
+        <ul>
+          <li><strong>البحث بالاسم</strong>: اكتب أي جزء من اسم المستشفى</li>
+          <li><strong>فلترة بالفئة</strong>: عالية / متوسطة / عادية</li>
+          <li><strong>فلترة بالخصم</strong>: حسب نسبة الخصم (20%، 30%، 40%، 50%)</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">8</span>إضافة/تعديل/حذف ➕✏️🗑️</h3>
+      <div class="instruction-box warning">
+        <h4>📝 إدارة المستشفيات:</h4>
+        <ul>
+          <li><strong>➕ إضافة مستشفى</strong>: اضغط الزر واملأ البيانات في التبويبات</li>
+          <li><strong>✏️ تعديل</strong>: اضغط زر التعديل في أي بطاقة مستشفى</li>
+          <li><strong>🗑️ حذف</strong>: اضغط زر الحذف (سيطلب تأكيد)</li>
+          <li><strong>🛏️ خدمات الداخلي</strong>: اضغط الزر الأخضر لعرض التفاصيل</li>
+          <li><strong>🏥 العمليات</strong>: اضغط الزر الأخضر لعرض تفاصيل العمليات</li>
+          <li><strong>⚙️ البنود المضافة</strong>: استخدم القائمة المنسدلة في كل بطاقة</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">9</span>الحفظ التلقائي 💾</h3>
+      <div class="instruction-box success">
+        <h4>💾 نظام الحفظ:</h4>
+        <ul>
+          <li>جميع البيانات تُحفظ تلقائياً في متصفحك (LocalStorage)</li>
+          <li>البيانات تبقى محفوظة حتى بعد إغلاق المتصفح</li>
+          <li>زر <strong>"🔄 إعادة البيانات الأصلية"</strong> يستعيد البيانات الافتراضية</li>
+          <li>⚠️ إعادة البيانات الأصلية ستفقد أي تعديلات قمت بها</li>
+        </ul>
+      </div>
+
+      <h3><span class="step-number">10</span>نصائح مهمة 💡</h3>
+      <div class="instruction-box danger">
+        <h4>⚠️ تنبيهات هامة:</h4>
+        <ul>
+          <li>قم بعمل <strong>تصدير دوري</strong> للبيانات كنسخة احتياطية</li>
+          <li>عند الاستيراد، تأكد من صحة تنسيق الملف</li>
+          <li>لا تغلق المتصفح أثناء الحفظ</li>
+          <li>استخدم متصفح حديث (Chrome, Edge, Firefox)</li>
+          <li>يمكن استخدام الملف المصدر كقالب للاستيراد</li>
+          <li>عند حذف بند مضاف، سيتم حذف بياناته من جميع المستشفيات</li>
+          <li>يمكن إنشاء عدد غير محدود من البنود المضافة</li>
+        </ul>
+      </div>
+
+      <div class="instructions-footer">
+        <div class="author">👨‍💻 حقوق الإنشاء والتطوير: م. سامي سيد رزق</div>
+        <div class="dept">🏢 قطاع الخدمات والأنشطة</div>
+        <div class="date">📅 نوفمبر 2026</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-purple" onclick="closeInstructions()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-credits">
+  <div class="author">👨‍💻 حقوق الإنشاء والتطوير: م. سامي سيد رزق</div>
+  <div class="dept">🏢 قطاع الخدمات والأنشطة</div>
+  <div class="date">📅 نوفمبر 2026</div>
+</div>
+
+<script>
+// ============ البيانات الأصلية ============
+function createDefaultHospital(id, name, category, period, fee, listDiscount, outpatient, inpatient, accommodation, surgeons, fees, icu, notes) {
+  return {
+    id: id,
+    name: name,
+    category: category,
+    period: period,
+    fee: fee,
+    listDiscount: listDiscount,
+    outpatient: outpatient,
+    inpatient: inpatient,
+    accommodation: accommodation,
+    surgeons: surgeons,
+    fees: fees,
+    icu: icu,
+    notes: notes,
+    inpatientServices: {
+      regular: [
+        {name: 'سعر الإقامة', price: 0, discount: 0, discountAmount: 0},
+        {name: 'الإشراف الطبي', price: 0, discount: 0, discountAmount: 0},
+        {name: 'الاستشاري', price: 0, discount: 0, discountAmount: 0}
+      ],
+      icu: [
+        {name: 'سعر الإقامة', price: 0, discount: 0, discountAmount: 0},
+        {name: 'الإشراف الطبي', price: 0, discount: 0, discountAmount: 0},
+        {name: 'الاستشاري', price: 0, discount: 0, discountAmount: 0}
+      ]
+    },
+    surgeries: {
+      advanced: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      special: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      skilled: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      major: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      medium: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      minor: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ],
+      simple: [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ]
+    },
+    customData: {}
+  };
+}
+
+const defaultHospitals = [
+  createDefaultHospital(1, "المركز الطبي للمقاولون العرب", "عالية", "2020-2022", 50, 10, 20, 20, 20, 25, 20, 20, "خصم 10% على بعض بنود لائحة المستشفى"),
+  createDefaultHospital(2, "المستشفى الجوي", "عالية", "2020-2022", 50, 30, 20, 25, 25, 25, 50, 25, "خصم 30% على لائحة المستشفى"),
+  createDefaultHospital(13, "مستشفى دار الفؤاد", "عالية", "2020-2022", 200, 30, 15, 15, 15, 15, 15, 15, "10% قسم الأطفال المتيسرين و 30% على الإقامة")
+];
+
+// تعديل بيانات دار الفؤاد
+defaultHospitals[2].inpatientServices.regular = [
+  {name: 'سعر الإقامة', price: 500, discount: 15, discountAmount: 75},
+  {name: 'الإشراف الطبي', price: 200, discount: 15, discountAmount: 30},
+  {name: 'الاستشاري', price: 300, discount: 15, discountAmount: 45}
+];
+defaultHospitals[2].inpatientServices.icu = [
+  {name: 'سعر الإقامة', price: 1500, discount: 15, discountAmount: 225},
+  {name: 'الإشراف الطبي', price: 400, discount: 15, discountAmount: 60},
+  {name: 'الاستشاري', price: 500, discount: 15, discountAmount: 75}
+];
+defaultHospitals[2].surgeries.advanced = [
+  {name: 'فتح غرفة العمليات', price: 5000, discount: 20, discountAmount: 1000},
+  {name: 'مستهلكات العملية', price: 3000, discount: 20, discountAmount: 600},
+  {name: 'أجر الجراح', price: 8000, discount: 20, discountAmount: 1600},
+  {name: 'المساعد', price: 2000, discount: 20, discountAmount: 400}
+];
+
+const extraHospitalsData = [
+  {id:3,name:"مستشفى جامعة 6 أكتوبر",category:"عالية",period:"2020-2022",fee:200,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:"عدا الإتفاقيات بالشمالة"},
+  {id:4,name:"مستشفى جامعة مصر الجديدة",category:"عالية",period:"2020-2022",fee:200,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:""},
+  {id:5,name:"مستشفى الرحمة مصر الجديدة",category:"عالية",period:"2020-2022",fee:250,listDiscount:20,outpatient:50,inpatient:50,accommodation:30,surgeons:30,fees:40,icu:30,notes:"خصم 20% على لائحة المستشفى"},
+  {id:6,name:"مستشفى السلام الدولي",category:"عالية",period:"2020-2022",fee:200,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:""},
+  {id:7,name:"مستشفى الشرق",category:"عالية",period:"2020-2022",fee:200,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:""},
+  {id:8,name:"مستشفى السعودي الألماني",category:"عالية",period:"2020-2022",fee:250,listDiscount:20,outpatient:25,inpatient:25,accommodation:20,surgeons:20,fees:25,icu:25,notes:""},
+  {id:9,name:"مستشفى جوبال ميديكال سيتي",category:"عالية",period:"2020-2022",fee:50,listDiscount:50,outpatient:50,inpatient:50,accommodation:50,surgeons:50,fees:50,icu:50,notes:""},
+  {id:10,name:"مستشفى النهار",category:"عالية",period:"2020-2022",fee:250,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:""},
+  {id:11,name:"مستشفى اندلسية المعادي",category:"عالية",period:"2020-2022",fee:250,listDiscount:20,outpatient:20,inpatient:20,accommodation:20,surgeons:20,fees:20,icu:20,notes:""},
+  {id:12,name:"مستشفى د.عثمان بالمعادي",category:"عالية",period:"2020-2022",fee:300,listDiscount:30,outpatient:40,inpatient:40,accommodation:25,surgeons:25,fees:40,icu:40,notes:""},
+  {id:14,name:"مستشفى دار الفؤاد مدينة نصر",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:15,inpatient:15,accommodation:15,surgeons:15,fees:15,icu:15,notes:""},
+  {id:15,name:"رويال هايت كير",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:15,inpatient:15,accommodation:15,surgeons:15,fees:15,icu:15,notes:""},
+  {id:16,name:"القلعة كلينيك",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:20,inpatient:25,accommodation:25,surgeons:30,fees:30,icu:30,notes:""},
+  {id:17,name:"مستشفى الجولف",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:40,inpatient:50,accommodation:50,surgeons:50,fees:50,icu:50,notes:""},
+  {id:18,name:"مستشفى سلام",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:40,inpatient:50,accommodation:50,surgeons:50,fees:50,icu:50,notes:""},
+  {id:19,name:"مركز القاهرة لأمراض الكلى",category:"عالية",period:"2020-2022",fee:200,listDiscount:30,outpatient:40,inpatient:50,accommodation:50,surgeons:50,fees:50,icu:50,notes:""},
+  {id:20,name:"مركز دار الكلى",category:"عالية",period:"2020-2022",fee:200,listDiscount:100,outpatient:100,inpatient:100,accommodation:100,surgeons:100,fees:100,icu:100,notes:"100% على لائحة الأسعار"},
+  {id:21,name:"مركز شفاء للسكر والأشعة التداخلية",category:"عالية",period:"2020-2022",fee:200,listDiscount:70,outpatient:70,inpatient:70,accommodation:70,surgeons:70,fees:70,icu:70,notes:"خصم على جميع الأشعة التداخلية 70%"},
+  {id:22,name:"مركز و عيادات اكسا",category:"عالية",period:"2020-2022",fee:200,listDiscount:50,outpatient:50,inpatient:50,accommodation:50,surgeons:50,fees:50,icu:50,notes:""},
+  {id:23,name:"مركز منتظر للعظام",category:"عالية",period:"2020-2022",fee:500,listDiscount:15,outpatient:15,inpatient:15,accommodation:15,surgeons:15,fees:15,icu:15,notes:""},
+  {id:24,name:"مستشفى كليوباترا",category:"عالية",period:"2020-2022",fee:100,listDiscount:10,outpatient:10,inpatient:10,accommodation:10,surgeons:10,fees:10,icu:10,notes:""},
+  {id:25,name:"مستشفى الجبوري",category:"عالية",period:"2020-2022",fee:250,listDiscount:15,outpatient:15,inpatient:15,accommodation:15,surgeons:15,fees:15,icu:15,notes:""}
+];
+
+const extraHospitals = extraHospitalsData.map(h => createDefaultHospital(h.id, h.name, h.category, h.period, h.fee, h.listDiscount, h.outpatient, h.inpatient, h.accommodation, h.surgeons, h.fees, h.icu, h.notes));
+
+const fullDefaultData = [...defaultHospitals, ...extraHospitals];
+
+// ============ إدارة البيانات ============
+let hospitals = [];
+let customSections = [];
+
+function loadData() {
+  const saved = localStorage.getItem('hospitalsDataV4');
+  const savedSections = localStorage.getItem('customSectionsV2');
+  
+  if (saved) {
+    hospitals = JSON.parse(saved);
+  } else {
+    hospitals = JSON.parse(JSON.stringify(fullDefaultData));
+  }
+  
+  if (savedSections) {
+    customSections = JSON.parse(savedSections);
+  } else {
+    customSections = [];
+  }
+  
+  saveToStorage();
+}
+
+function saveToStorage() {
+  localStorage.setItem('hospitalsDataV4', JSON.stringify(hospitals));
+  localStorage.setItem('customSectionsV2', JSON.stringify(customSections));
+}
+
+function resetData() {
+  if (confirm('هل تريد إعادة البيانات الأصلية؟ سيتم فقدان أي تعديلات.')) {
+    hospitals = JSON.parse(JSON.stringify(fullDefaultData));
+    customSections = [];
+    saveToStorage();
+    renderCards();
+    updateStats();
+  }
+}
+
+// ============ Tabs ============
+function switchTab(tabName, event) {
+  document.querySelectorAll('#mainTabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+}
+
+// ============ مستويات العمليات ============
+const surgeryLevels = [
+  {key:'advanced', name:'متقدمة', color:'#c62828'},
+  {key:'special', name:'طابع خاص', color:'#ef6c00'},
+  {key:'skilled', name:'مهارة', color:'#f9a825'},
+  {key:'major', name:'كبرى', color:'#2e7d32'},
+  {key:'medium', name:'متوسطة', color:'#1565c0'},
+  {key:'minor', name:'صغرى', color:'#6a1b9a'},
+  {key:'simple', name:'بسيطة', color:'#00838f'}
+];
+
+// ============ إدارة البنود المضافة ============
+function openCustomSectionsManager() {
+  document.getElementById('customSectionsOverlay').classList.add('active');
+  renderCustomSectionsList();
+}
+
+function closeCustomSectionsManager() {
+  document.getElementById('customSectionsOverlay').classList.remove('active');
+}
+
+function renderCustomSectionsList() {
+  const container = document.getElementById('customSectionsList');
+  
+  if (customSections.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h3>لا توجد بنود مضافة</h3><p>اضغط "➕ إضافة بند جديد" للبدء</p></div>';
+    return;
+  }
+  
+  container.innerHTML = customSections.map((section, index) => `
+    <div class="custom-section-item">
+      <div class="custom-section-header">
+        <h4>📋 ${section.name}</h4>
+        <div class="custom-section-actions">
+          <button class="btn btn-sm btn-warning" onclick="editCustomSection(${index})">✏️ تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCustomSection(${index})">🗑️ حذف</button>
+        </div>
+      </div>
+      <div class="custom-section-content">
+        <div class="column-list">
+          <strong>رؤوس الأعمدة (التصنيفات):</strong>
+          ${section.columns.map(col => `<div class="column-item"><span>${col}</span></div>`).join('')}
+        </div>
+        <div class="row-list">
+          <strong>رؤوس الصفوف (الإجراءات):</strong>
+          ${section.rows.map(row => `<div class="row-item"><span>${row}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addNewCustomSection() {
+  const name = prompt('أدخل اسم البند الجديد (مثل: الأشعة، التحاليل، إلخ):');
+  if (!name || !name.trim()) return;
+  
+  const columnsStr = prompt('أدخل رؤوس الأعمدة (التصنيفات) مفصولة بفاصلة (مثل: عادي, خاص, VIP):');
+  if (!columnsStr) return;
+  const columns = columnsStr.split(',').map(c => c.trim()).filter(c => c);
+  
+  const rowsStr = prompt('أدخل رؤوس الصفوف (الإجراءات) مفصولة بفاصلة (مثل: أشعة سينية, رنين مغناطيسي):');
+  if (!rowsStr) return;
+  const rows = rowsStr.split(',').map(r => r.trim()).filter(r => r);
+  
+  if (columns.length === 0 || rows.length === 0) {
+    alert('⚠️ يجب إدخال عمود واحد على الأقل وصف واحد على الأقل!');
+    return;
+  }
+  
+  customSections.push({
+    id: Date.now(),
+    name: name.trim(),
+    columns: columns,
+    rows: rows
+  });
+  
+  saveToStorage();
+  renderCustomSectionsList();
+  updateStats();
+  renderCards();
+  alert('✅ تم إضافة البند بنجاح!');
+}
+
+function editCustomSection(index) {
+  const section = customSections[index];
+  const name = prompt('تعديل اسم البند:', section.name);
+  if (!name || !name.trim()) return;
+  
+  const columnsStr = prompt('تعديل رؤوس الأعمدة (مفصولة بفاصلة):', section.columns.join(', '));
+  if (!columnsStr) return;
+  const columns = columnsStr.split(',').map(c => c.trim()).filter(c => c);
+  
+  const rowsStr = prompt('تعديل رؤوس الصفوف (مفصولة بفاصلة):', section.rows.join(', '));
+  if (!rowsStr) return;
+  const rows = rowsStr.split(',').map(r => r.trim()).filter(r => r);
+  
+  customSections[index] = {
+    ...section,
+    name: name.trim(),
+    columns: columns,
+    rows: rows
+  };
+  
+  saveToStorage();
+  renderCustomSectionsList();
+  renderCards();
+  alert('✅ تم تعديل البند بنجاح!');
+}
+
+function deleteCustomSection(index) {
+  if (!confirm(`هل أنت متأكد من حذف البند "${customSections[index].name}"؟\nسيتم حذف جميع البيانات المرتبطة به من المستشفيات!`)) {
+    return;
+  }
+  
+  const sectionId = customSections[index].id;
+  customSections.splice(index, 1);
+  
+  hospitals.forEach(h => {
+    if (h.customData) {
+      delete h.customData[sectionId];
+    }
+  });
+  
+  saveToStorage();
+  renderCustomSectionsList();
+  renderCards();
+  updateStats();
+  alert('✅ تم حذف البند بنجاح!');
+}
+
+// ============ جداول خدمات الداخلي الديناميكية ============
+function renderInpatientTable(type, items) {
+  const container = document.getElementById(type + 'ItemsContainer');
+  if (!container) return;
+  
+  let html = `
+    <div class="dynamic-table-container">
+      <table class="dynamic-table">
+        <thead>
+          <tr>
+            <th style="width:30%">اسم البند</th>
+            <th style="width:20%">المبلغ (ج)</th>
+            <th style="width:15%">نسبة الخصم %</th>
+            <th style="width:20%">مبلغ الخصم (ج)</th>
+            <th style="width:15%">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  items.forEach((item, index) => {
+    html += `
+      <tr>
+        <td><input type="text" class="item-name" data-type="${type}" data-index="${index}" value="${item.name}" placeholder="اسم البند"></td>
+        <td><input type="number" class="item-price" data-type="${type}" data-index="${index}" step="0.01" value="${item.price}" placeholder="0" onchange="calculateDiscountAmount('${type}', ${index})" oninput="calculateDiscountAmount('${type}', ${index})"></td>
+        <td><input type="number" class="item-discount" data-type="${type}" data-index="${index}" step="0.1" value="${item.discount}" placeholder="0" onchange="calculateDiscountAmount('${type}', ${index})" oninput="calculateDiscountAmount('${type}', ${index})"></td>
+        <td><input type="number" class="item-discount-amount" data-type="${type}" data-index="${index}" step="0.01" value="${item.discountAmount}" placeholder="0" readonly></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-xs btn-danger" onclick="removeInpatientRow('${type}', ${index})">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+function addInpatientRow(type) {
+  const h = getCurrentHospitalData();
+  if (!h) return;
+  
+  if (!h.inpatientServices[type]) {
+    h.inpatientServices[type] = [];
+  }
+  
+  h.inpatientServices[type].push({
+    name: 'بند جديد',
+    price: 0,
+    discount: 0,
+    discountAmount: 0
+  });
+  
+  renderInpatientTable(type, h.inpatientServices[type]);
+}
+
+function removeInpatientRow(type, index) {
+  const h = getCurrentHospitalData();
+  if (!h) return;
+  
+  if (h.inpatientServices[type].length <= 1) {
+    alert('⚠️ يجب الاحتفاظ بصف واحد على الأقل!');
+    return;
+  }
+  
+  if (confirm('هل أنت متأكد من حذف هذا البند؟')) {
+    h.inpatientServices[type].splice(index, 1);
+    renderInpatientTable(type, h.inpatientServices[type]);
+  }
+}
+
+function calculateDiscountAmount(type, index) {
+  const priceInput = document.querySelector(`.item-price[data-type="${type}"][data-index="${index}"]`);
+  const discountInput = document.querySelector(`.item-discount[data-type="${type}"][data-index="${index}"]`);
+  const discountAmountInput = document.querySelector(`.item-discount-amount[data-type="${type}"][data-index="${index}"]`);
+  
+  if (priceInput && discountInput && discountAmountInput) {
+    const price = parseFloat(priceInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    const discountAmount = (price * discount / 100).toFixed(2);
+    discountAmountInput.value = discountAmount;
+  }
+}
+
+// ============ جداول العمليات الديناميكية ============
+function renderSurgeryTables(hospitalData) {
+  const container = document.getElementById('surgeryLevelsContainer');
+  if (!container) return;
+  
+  let html = '';
+  
+  surgeryLevels.forEach(level => {
+    const items = hospitalData?.surgeries?.[level.key] || [
+      {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+      {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+      {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+      {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+    ];
+    
+    html += `
+      <div class="subsection-title" style="border-right-color:${level.color}; color:${level.color}; background:${level.color}15;">
+        <span>🔹 مستوى: ${level.name}</span>
+        <button class="btn btn-xs btn-success" onclick="addSurgeryRow('${level.key}')">➕ إضافة بند</button>
+      </div>
+      <div class="dynamic-table-container">
+        <table class="dynamic-table">
+          <thead>
+            <tr>
+              <th style="width:30%">اسم البند</th>
+              <th style="width:18%">المبلغ (ج)</th>
+              <th style="width:12%">نسبة الخصم %</th>
+              <th style="width:18%">مبلغ الخصم (ج)</th>
+              <th style="width:12%">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    items.forEach((item, index) => {
+      html += `
+        <tr>
+          <td><input type="text" class="surg-name" data-level="${level.key}" data-index="${index}" value="${item.name}" placeholder="اسم البند"></td>
+          <td><input type="number" class="surg-price" data-level="${level.key}" data-index="${index}" step="0.01" value="${item.price}" placeholder="0" onchange="calculateSurgeryDiscount('${level.key}', ${index})" oninput="calculateSurgeryDiscount('${level.key}', ${index})"></td>
+          <td><input type="number" class="surg-discount" data-level="${level.key}" data-index="${index}" step="0.1" value="${item.discount}" placeholder="0" onchange="calculateSurgeryDiscount('${level.key}', ${index})" oninput="calculateSurgeryDiscount('${level.key}', ${index})"></td>
+          <td><input type="number" class="surg-discount-amount" data-level="${level.key}" data-index="${index}" step="0.01" value="${item.discountAmount}" placeholder="0" readonly></td>
+          <td>
+            <div class="row-actions">
+              <button class="btn btn-xs btn-danger" onclick="removeSurgeryRow('${level.key}', ${index})">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+function addSurgeryRow(levelKey) {
+  const h = getCurrentHospitalData();
+  if (!h) return;
+  
+  if (!h.surgeries[levelKey]) {
+    h.surgeries[levelKey] = [];
+  }
+  
+  h.surgeries[levelKey].push({
+    name: 'بند جديد',
+    price: 0,
+    discount: 0,
+    discountAmount: 0
+  });
+  
+  renderSurgeryTables(h);
+}
+
+function removeSurgeryRow(levelKey, index) {
+  const h = getCurrentHospitalData();
+  if (!h) return;
+  
+  if (h.surgeries[levelKey].length <= 1) {
+    alert('⚠️ يجب الاحتفاظ بصف واحد على الأقل!');
+    return;
+  }
+  
+  if (confirm('هل أنت متأكد من حذف هذا البند؟')) {
+    h.surgeries[levelKey].splice(index, 1);
+    renderSurgeryTables(h);
+  }
+}
+
+function calculateSurgeryDiscount(levelKey, index) {
+  const priceInput = document.querySelector(`.surg-price[data-level="${levelKey}"][data-index="${index}"]`);
+  const discountInput = document.querySelector(`.surg-discount[data-level="${levelKey}"][data-index="${index}"]`);
+  const discountAmountInput = document.querySelector(`.surg-discount-amount[data-level="${levelKey}"][data-index="${index}"]`);
+  
+  if (priceInput && discountInput && discountAmountInput) {
+    const price = parseFloat(priceInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    const discountAmount = (price * discount / 100).toFixed(2);
+    discountAmountInput.value = discountAmount;
+  }
+}
+
+// ============ جداول البنود المضافة الديناميكية ============
+function renderCustomSectionTable(section, hospitalData) {
+  const customData = hospitalData?.customData?.[section.id] || {};
+  
+  let html = `
+    <div class="section-title" style="background: #00796b;">
+      <span>⚙️ ${section.name}</span>
+      <button class="btn btn-xs btn-success" onclick="addCustomRow(${section.id})">➕ إضافة إجراء</button>
+    </div>
+    <p style="color:#666; font-size:13px; margin-bottom:15px;">
+      الأعمدة: ${section.columns.join(' | ')}
+    </p>
+    <div class="dynamic-table-container">
+      <table class="dynamic-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:20%">الإجراء</th>
+            ${section.columns.map(col => `<th colspan="3">${col}</th>`).join('')}
+            <th rowspan="2" style="width:10%">إجراءات</th>
+          </tr>
+          <tr>
+            ${section.columns.map(() => `<th>المبلغ</th><th>الخصم %</th><th>مبلغ الخصم</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  section.rows.forEach((row, rowIndex) => {
+    html += `<tr>`;
+    html += `<td><input type="text" class="custom-row-name" data-section="${section.id}" data-row-index="${rowIndex}" value="${row}" placeholder="اسم الإجراء"></td>`;
+    
+    section.columns.forEach(col => {
+      const cell = customData[row]?.[col] || {price: 0, discount: 0, discountAmount: 0};
+      html += `
+        <td><input type="number" class="custom-price" data-section="${section.id}" data-row="${row}" data-col="${col}" step="0.01" value="${cell.price}" placeholder="0" onchange="calculateCustomDiscount('${section.id}', '${row}', '${col}')" oninput="calculateCustomDiscount('${section.id}', '${row}', '${col}')"></td>
+        <td><input type="number" class="custom-discount" data-section="${section.id}" data-row="${row}" data-col="${col}" step="0.1" value="${cell.discount}" placeholder="0" onchange="calculateCustomDiscount('${section.id}', '${row}', '${col}')" oninput="calculateCustomDiscount('${section.id}', '${row}', '${col}')"></td>
+        <td><input type="number" class="custom-discount-amount" data-section="${section.id}" data-row="${row}" data-col="${col}" step="0.01" value="${cell.discountAmount}" placeholder="0" readonly></td>
+      `;
+    });
+    
+    html += `
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-xs btn-danger" onclick="removeCustomRow(${section.id}, ${rowIndex})">🗑️</button>
+        </div>
+      </td>
+    `;
+    html += `</tr>`;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  
+  return html;
+}
+
+function addCustomRow(sectionId) {
+  const section = customSections.find(s => s.id === sectionId);
+  if (!section) return;
+  
+  const newRowName = prompt('أدخل اسم الإجراء الجديد:');
+  if (!newRowName || !newRowName.trim()) return;
+  
+  section.rows.push(newRowName.trim());
+  saveToStorage();
+  
+  // إعادة رسم الجدول
+  const h = getCurrentHospitalData();
+  const tabContent = document.getElementById('tab-custom_' + sectionId);
+  if (tabContent && h) {
+    tabContent.innerHTML = renderCustomSectionTable(section, h);
+  }
+}
+
+function removeCustomRow(sectionId, rowIndex) {
+  const section = customSections.find(s => s.id === sectionId);
+  if (!section) return;
+  
+  if (section.rows.length <= 1) {
+    alert('⚠️ يجب الاحتفاظ بصف واحد على الأقل!');
+    return;
+  }
+  
+  if (confirm(`هل أنت متأكد من حذف الإجراء "${section.rows[rowIndex]}"؟`)) {
+    const removedRow = section.rows[rowIndex];
+    section.rows.splice(rowIndex, 1);
+    
+    // حذف البيانات المرتبطة
+    hospitals.forEach(h => {
+      if (h.customData && h.customData[sectionId]) {
+        delete h.customData[sectionId][removedRow];
+      }
+    });
+    
+    saveToStorage();
+    
+    const h = getCurrentHospitalData();
+    const tabContent = document.getElementById('tab-custom_' + sectionId);
+    if (tabContent && h) {
+      tabContent.innerHTML = renderCustomSectionTable(section, h);
+    }
+  }
+}
+
+function calculateCustomDiscount(sectionId, row, col) {
+  const priceInput = document.querySelector(`.custom-price[data-section="${sectionId}"][data-row="${row}"][data-col="${col}"]`);
+  const discountInput = document.querySelector(`.custom-discount[data-section="${sectionId}"][data-row="${row}"][data-col="${col}"]`);
+  const discountAmountInput = document.querySelector(`.custom-discount-amount[data-section="${sectionId}"][data-row="${row}"][data-col="${col}"]`);
+  
+  if (priceInput && discountInput && discountAmountInput) {
+    const price = parseFloat(priceInput.value) || 0;
+    const discount = parseFloat(discountInput.value) || 0;
+    const discountAmount = (price * discount / 100).toFixed(2);
+    discountAmountInput.value = discountAmount;
+  }
+}
+
+// ============ الحصول على بيانات المستشفى الحالية ============
+let currentHospitalData = null;
+
+function getCurrentHospitalData() {
+  return currentHospitalData;
+}
+
+// ============ العرض ============
+function renderCards() {
+  const container = document.getElementById('cardsContainer');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const category = document.getElementById('filterCategory').value;
+  const discount = document.getElementById('filterDiscount').value;
+  
+  let filtered = hospitals.filter(h => {
+    const matchSearch = h.name.toLowerCase().includes(search);
+    const matchCategory = !category || h.category === category;
+    const matchDiscount = !discount || h.outpatient >= parseInt(discount);
+    return matchSearch && matchCategory && matchDiscount;
+  });
+  
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><h3>لا توجد نتائج</h3><p>جرب تغيير معايير البحث</p></div>';
+    return;
+  }
+  
+  container.innerHTML = filtered.map(h => {
+    let customSectionHTML = '';
+    if (customSections.length > 0) {
+      customSectionHTML = `
+        <div class="custom-section-card">
+          <label>⚙️ البنود المضافة:</label>
+          <select id="customSelect_${h.id}">
+            <option value="">-- اختر بنداً --</option>
+            ${customSections.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+          </select>
+          <div class="btn-row">
+            <button class="btn btn-sm btn-purple" onclick="goToCustomSection(${h.id})">👁️ عرض/تعديل</button>
+            <button class="btn btn-sm btn-info" onclick="showDetail(${h.id}, 'custom_dropdown')">📊 عرض سريع</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="hospital-card">
+        <div class="card-header">
+          <h3>${h.name}</h3>
+          <span class="badge">${h.category}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-row">
+            <span class="label">📅 الفترة:</span>
+            <span class="value">${h.period || '-'}</span>
+          </div>
+          <div class="card-row">
+            <span class="label">💰 سعر الكشف:</span>
+            <span class="value">${h.fee || 0} ج</span>
+          </div>
+          <div class="card-row">
+            <span class="label">📋 خصم اللائحة:</span>
+            <span class="value">${h.listDiscount || 0}%</span>
+          </div>
+          <div class="discounts-grid">
+            <div class="discount-item"><div class="d-label">خارجي</div><div class="d-value">${h.outpatient || 0}%</div></div>
+            <div class="discount-item"><div class="d-label">داخلي</div><div class="d-value">${h.inpatient || 0}%</div></div>
+            <div class="discount-item"><div class="d-label">إقامة</div><div class="d-value">${h.accommodation || 0}%</div></div>
+            <div class="discount-item"><div class="d-label">جراحين</div><div class="d-value">${h.surgeons || 0}%</div></div>
+            <div class="discount-item"><div class="d-label">أتعاب</div><div class="d-value">${h.fees || 0}%</div></div>
+            <div class="discount-item"><div class="d-label">عناية مركزة</div><div class="d-value">${h.icu || 0}%</div></div>
+          </div>
+          <div class="extra-sections" style="margin-top: 10px;">
+            <button class="extra-btn" onclick="showDetail(${h.id},'inpatient')">🛏️ خدمات الداخلي</button>
+            <button class="extra-btn" onclick="showDetail(${h.id},'surgery')">🏥 العمليات</button>
+          </div>
+          ${customSectionHTML}
+          ${h.notes ? `<div class="notes-box">📝 ${h.notes}</div>` : ''}
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-sm btn-warning" onclick="editHospital(${h.id})">✏️ تعديل</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteHospital(${h.id})">🗑️ حذف</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// الانتقال المباشر إلى البند المضاف
+function goToCustomSection(hospitalId) {
+  const select = document.getElementById('customSelect_' + hospitalId);
+  const sectionId = select.value;
+  
+  if (!sectionId) {
+    alert('⚠️ يرجى اختيار بند من القائمة أولاً!');
+    return;
+  }
+  
+  openModal(hospitalId);
+  
+  setTimeout(() => {
+    const tabId = 'tab-custom_' + sectionId;
+    const tabContent = document.getElementById(tabId);
+    
+    if (tabContent) {
+      document.querySelectorAll('#mainTabs .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      
+      const customTab = document.querySelector(`#mainTabs .tab[onclick*="custom_${sectionId}"]`);
+      if (customTab) customTab.classList.add('active');
+      tabContent.classList.add('active');
+    } else {
+      alert('⚠️ لم يتم العثور على تبويب البند.');
+    }
+  }, 200);
+}
+
+function updateStats() {
+  document.getElementById('totalCount').textContent = hospitals.length;
+  const avgOut = hospitals.length > 0 ? hospitals.reduce((s, h) => s + (h.outpatient || 0), 0) / hospitals.length : 0;
+  const avgIn = hospitals.length > 0 ? hospitals.reduce((s, h) => s + (h.inpatient || 0), 0) / hospitals.length : 0;
+  document.getElementById('avgOutpatient').textContent = avgOut.toFixed(1) + '%';
+  document.getElementById('avgInpatient').textContent = avgIn.toFixed(1) + '%';
+  document.getElementById('customSectionsCount').textContent = customSections.length;
+}
+
+// ============ Modal ============
+function openModal(id = null) {
+  document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('modalTitle').textContent = id ? 'تعديل مستشفى' : 'إضافة مستشفى جديد';
+  
+  document.querySelectorAll('#mainTabs .tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  document.querySelectorAll('.tab-content').forEach((t, i) => t.classList.toggle('active', i === 0));
+  
+  if (id) {
+    const h = hospitals.find(x => x.id === id);
+    currentHospitalData = JSON.parse(JSON.stringify(h));
+    
+    document.getElementById('hospitalId').value = h.id;
+    document.getElementById('hName').value = h.name;
+    document.getElementById('hCategory').value = h.category;
+    document.getElementById('hPeriod').value = h.period || '';
+    document.getElementById('hFee').value = h.fee || '';
+    document.getElementById('hListDiscount').value = h.listDiscount || '';
+    document.getElementById('dOutpatient').value = h.outpatient || '';
+    document.getElementById('dInpatient').value = h.inpatient || '';
+    document.getElementById('dAccommodation').value = h.accommodation || '';
+    document.getElementById('dSurgeons').value = h.surgeons || '';
+    document.getElementById('dFees').value = h.fees || '';
+    document.getElementById('dICU').value = h.icu || '';
+    document.getElementById('hNotes').value = h.notes || '';
+    
+    // رسم جداول Services الداخلي
+    renderInpatientTable('regular', currentHospitalData.inpatientServices.regular);
+    renderInpatientTable('icu', currentHospitalData.inpatientServices.icu);
+    
+    // رسم جداول العمليات
+    renderSurgeryTables(currentHospitalData);
+    
+    // إضافة تبويبات البنود المضافة
+    updateHospitalTabs();
+    
+    // تحميل بيانات البنود المضافة
+    setTimeout(() => {
+      customSections.forEach(section => {
+        const tabContent = document.getElementById('tab-custom_' + section.id);
+        if (tabContent) {
+          tabContent.innerHTML = renderCustomSectionTable(section, currentHospitalData);
+        }
+      });
+    }, 100);
+    
+  } else {
+    currentHospitalData = {
+      id: null,
+      name: '',
+      category: 'عالية',
+      period: '',
+      fee: 0,
+      listDiscount: 0,
+      outpatient: 0,
+      inpatient: 0,
+      accommodation: 0,
+      surgeons: 0,
+      fees: 0,
+      icu: 0,
+      notes: '',
+      inpatientServices: {
+        regular: [
+          {name: 'سعر الإقامة', price: 0, discount: 0, discountAmount: 0},
+          {name: 'الإشراف الطبي', price: 0, discount: 0, discountAmount: 0},
+          {name: 'الاستشاري', price: 0, discount: 0, discountAmount: 0}
+        ],
+        icu: [
+          {name: 'سعر الإقامة', price: 0, discount: 0, discountAmount: 0},
+          {name: 'الإشراف الطبي', price: 0, discount: 0, discountAmount: 0},
+          {name: 'الاستشاري', price: 0, discount: 0, discountAmount: 0}
+        ]
+      },
+      surgeries: {},
+      customData: {}
+    };
+    
+    surgeryLevels.forEach(level => {
+      currentHospitalData.surgeries[level.key] = [
+        {name: 'فتح غرفة العمليات', price: 0, discount: 0, discountAmount: 0},
+        {name: 'مستهلكات العملية', price: 0, discount: 0, discountAmount: 0},
+        {name: 'أجر الجراح', price: 0, discount: 0, discountAmount: 0},
+        {name: 'المساعد', price: 0, discount: 0, discountAmount: 0}
+      ];
+    });
+    
+    document.getElementById('hospitalId').value = '';
+    document.getElementById('hName').value = '';
+    document.getElementById('hPeriod').value = '';
+    document.getElementById('hFee').value = '';
+    document.getElementById('hListDiscount').value = '';
+    document.getElementById('dOutpatient').value = '';
+    document.getElementById('dInpatient').value = '';
+    document.getElementById('dAccommodation').value = '';
+    document.getElementById('dSurgeons').value = '';
+    document.getElementById('dFees').value = '';
+    document.getElementById('dICU').value = '';
+    document.getElementById('hNotes').value = '';
+    
+    renderInpatientTable('regular', currentHospitalData.inpatientServices.regular);
+    renderInpatientTable('icu', currentHospitalData.inpatientServices.icu);
+    renderSurgeryTables(currentHospitalData);
+    updateHospitalTabs();
+  }
+}
+
+function updateHospitalTabs() {
+  const tabsContainer = document.getElementById('mainTabs');
+  
+  tabsContainer.querySelectorAll('.tab-custom').forEach(t => t.remove());
+  document.querySelectorAll('.tab-content-custom').forEach(t => t.remove());
+  
+  customSections.forEach(section => {
+    const tabBtn = document.createElement('button');
+    tabBtn.className = 'tab tab-custom';
+    tabBtn.textContent = `⚙️ ${section.name}`;
+    tabBtn.onclick = function(event) { switchTab('custom_' + section.id, event); };
+    tabsContainer.appendChild(tabBtn);
+    
+    const tabContent = document.createElement('div');
+    tabContent.className = 'tab-content tab-content-custom';
+    tabContent.id = 'tab-custom_' + section.id;
+    tabContent.innerHTML = renderCustomSectionTable(section, currentHospitalData);
+    document.querySelector('.modal-body').appendChild(tabContent);
+  });
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  currentHospitalData = null;
+}
+
+function saveHospital() {
+  if (!currentHospitalData) return;
+  
+  const name = document.getElementById('hName').value.trim();
+  if (!name) { alert('⚠️ اسم المستشفى مطلوب!'); return; }
+  
+  currentHospitalData.name = name;
+  currentHospitalData.category = document.getElementById('hCategory').value;
+  currentHospitalData.period = document.getElementById('hPeriod').value;
+  currentHospitalData.fee = parseFloat(document.getElementById('hFee').value) || 0;
+  currentHospitalData.listDiscount = parseFloat(document.getElementById('hListDiscount').value) || 0;
+  currentHospitalData.outpatient = parseFloat(document.getElementById('dOutpatient').value) || 0;
+  currentHospitalData.inpatient = parseFloat(document.getElementById('dInpatient').value) || 0;
+  currentHospitalData.accommodation = parseFloat(document.getElementById('dAccommodation').value) || 0;
+  currentHospitalData.surgeons = parseFloat(document.getElementById('dSurgeons').value) || 0;
+  currentHospitalData.fees = parseFloat(document.getElementById('dFees').value) || 0;
+  currentHospitalData.icu = parseFloat(document.getElementById('dICU').value) || 0;
+  currentHospitalData.notes = document.getElementById('hNotes').value;
+  
+  // حفظ Services الداخلي
+  ['regular', 'icu'].forEach(type => {
+    currentHospitalData.inpatientServices[type] = [];
+    const names = document.querySelectorAll(`.item-name[data-type="${type}"]`);
+    const prices = document.querySelectorAll(`.item-price[data-type="${type}"]`);
+    const discounts = document.querySelectorAll(`.item-discount[data-type="${type}"]`);
+    const discountAmounts = document.querySelectorAll(`.item-discount-amount[data-type="${type}"]`);
+    
+    names.forEach((nameInput, index) => {
+      currentHospitalData.inpatientServices[type].push({
+        name: nameInput.value,
+        price: parseFloat(prices[index].value) || 0,
+        discount: parseFloat(discounts[index].value) || 0,
+        discountAmount: parseFloat(discountAmounts[index].value) || 0
+      });
+    });
+  });
+  
+  // حفظ العمليات
+  surgeryLevels.forEach(level => {
+    currentHospitalData.surgeries[level.key] = [];
+    const names = document.querySelectorAll(`.surg-name[data-level="${level.key}"]`);
+    const prices = document.querySelectorAll(`.surg-price[data-level="${level.key}"]`);
+    const discounts = document.querySelectorAll(`.surg-discount[data-level="${level.key}"]`);
+    const discountAmounts = document.querySelectorAll(`.surg-discount-amount[data-level="${level.key}"]`);
+    
+    names.forEach((nameInput, index) => {
+      currentHospitalData.surgeries[level.key].push({
+        name: nameInput.value,
+        price: parseFloat(prices[index].value) || 0,
+        discount: parseFloat(discounts[index].value) || 0,
+        discountAmount: parseFloat(discountAmounts[index].value) || 0
+      });
+    });
+  });
+  
+  // حفظ البنود المضافة
+  currentHospitalData.customData = {};
+  customSections.forEach(section => {
+    currentHospitalData.customData[section.id] = {};
+    
+    // تحديث أسماء الصفوف
+    const rowNameInputs = document.querySelectorAll(`.custom-row-name[data-section="${section.id}"]`);
+    rowNameInputs.forEach((input, index) => {
+      if (index < section.rows.length) {
+        section.rows[index] = input.value;
+      }
+    });
+    
+    section.rows.forEach(row => {
+      currentHospitalData.customData[section.id][row] = {};
+      section.columns.forEach(col => {
+        const priceInput = document.querySelector(`.custom-price[data-section="${section.id}"][data-row="${row}"][data-col="${col}"]`);
+        const discountInput = document.querySelector(`.custom-discount[data-section="${section.id}"][data-row="${row}"][data-col="${col}"]`);
+        const discountAmountInput = document.querySelector(`.custom-discount-amount[data-section="${section.id}"][data-row="${row}"][data-col="${col}"]`);
+        
+        currentHospitalData.customData[section.id][row][col] = {
+          price: parseFloat(priceInput?.value) || 0,
+          discount: parseFloat(discountInput?.value) || 0,
+          discountAmount: parseFloat(discountAmountInput?.value) || 0
+        };
+      });
+    });
+  });
+  
+  const id = document.getElementById('hospitalId').value;
+  
+  if (id) {
+    const idx = hospitals.findIndex(h => h.id === parseInt(id));
+    hospitals[idx] = { ...hospitals[idx], ...currentHospitalData };
+  } else {
+    const maxId = hospitals.reduce((m, h) => Math.max(m, h.id), 0);
+    currentHospitalData.id = maxId + 1;
+    hospitals.push(currentHospitalData);
+  }
+  
+  saveToStorage();
+  renderCards();
+  updateStats();
+  closeModal();
+  alert('✅ تم الحفظ بنجاح!');
+}
+
+function editHospital(id) { openModal(id); }
+
+function deleteHospital(id) {
+  if (confirm('هل أنت متأكد من حذف هذا المستشفى؟')) {
+    hospitals = hospitals.filter(h => h.id !== id);
+    saveToStorage();
+    renderCards();
+    updateStats();
+  }
+}
+
+// ============ عرض التفاصيل ============
+function showDetail(id, type) {
+  const h = hospitals.find(x => x.id === id);
+  document.getElementById('detailTitle').textContent = h.name;
+  const body = document.getElementById('detailBody');
+  
+  if (type === 'inpatient') {
+    let html = '';
+    ['regular', 'icu'].forEach(serviceType => {
+      const title = serviceType === 'regular' ? '🏨 الإقامة العادية / اليوم' : '🚑 العناية المركزة / اليوم';
+      const color = serviceType === 'regular' ? '#1565c0' : '#c62828';
+      const items = h.inpatientServices?.[serviceType] || [];
+      
+      html += `
+        <div class="detail-section">
+          <h3 style="color:${color}; margin-bottom:10px;">${title}</h3>
+          <table class="detail-table">
+            <tr><th>البند</th><th>المبلغ (ج)</th><th>نسبة الخصم %</th><th>مبلغ الخصم (ج)</th></tr>
+            ${items.map(item => `
+              <tr>
+                <td style="font-weight:bold;">${item.name}</td>
+                <td>${item.price}</td>
+                <td>${item.discount}%</td>
+                <td>${item.discountAmount}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      `;
+    });
+    body.innerHTML = html;
+  } else if (type === 'surgery') {
+    let html = `
+      <div class="detail-section">
+        <h3 style="color:#1565c0; margin-bottom:10px;">🏥 تفاصيل العمليات حسب المستوى</h3>
+    `;
+    
+    surgeryLevels.forEach(level => {
+      const items = h.surgeries?.[level.key] || [];
+      html += `
+        <h4 style="color:${level.color}; margin: 15px 0 10px;">🔹 ${level.name}</h4>
+        <table class="detail-table">
+          <tr><th>البند</th><th>المبلغ (ج)</th><th>نسبة الخصم %</th><th>مبلغ الخصم (ج)</th></tr>
+          ${items.map(item => `
+            <tr>
+              <td style="font-weight:bold;">${item.name}</td>
+              <td>${item.price}</td>
+              <td>${item.discount}%</td>
+              <td>${item.discountAmount}</td>
+            </tr>
+          `).join('')}
+        </table>
+      `;
+    });
+    
+    html += `</div>`;
+    body.innerHTML = html;
+  } else if (type === 'custom_dropdown') {
+    if (customSections.length === 0) {
+      body.innerHTML = '<div class="empty-state"><h3>لا توجد بنود مضافة</h3></div>';
+      return;
+    }
+    
+    let html = '';
+    customSections.forEach(section => {
+      const customData = h.customData?.[section.id] || {};
+      html += `
+        <div class="detail-section">
+          <h3 style="color:#00796b; margin-bottom:10px;">⚙️ ${section.name}</h3>
+          <table class="detail-table">
+            <tr>
+              <th>الإجراء</th>
+              ${section.columns.map(col => `<th colspan="3">${col}</th>`).join('')}
+            </tr>
+            <tr>
+              <th></th>
+              ${section.columns.map(() => `<th>المبلغ</th><th>الخصم %</th><th>مبلغ الخصم</th>`).join('')}
+            </tr>
+            ${section.rows.map(row => {
+              const rowData = customData[row] || {};
+              return `<tr>
+                <td style="font-weight:bold;">${row}</td>
+                ${section.columns.map(col => {
+                  const cell = rowData[col] || {price: 0, discount: 0, discountAmount: 0};
+                  return `<td>${cell.price || 0}</td><td>${cell.discount || 0}%</td><td>${cell.discountAmount || 0}</td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+          </table>
+        </div>
+      `;
+    });
+    body.innerHTML = html;
+  } else if (type.startsWith('custom_')) {
+    const sectionId = parseInt(type.replace('custom_', ''));
+    const section = customSections.find(s => s.id === sectionId);
+    if (!section) {
+      body.innerHTML = '<div class="empty-state"><h3>البند غير موجود</h3></div>';
+      return;
+    }
+    
+    const customData = h.customData?.[sectionId] || {};
+    body.innerHTML = `
+      <div class="detail-section">
+        <h3 style="color:#00796b; margin-bottom:10px;">⚙️ ${section.name}</h3>
+        <table class="detail-table">
+          <tr>
+            <th>الإجراء</th>
+            ${section.columns.map(col => `<th colspan="3">${col}</th>`).join('')}
+          </tr>
+          <tr>
+            <th></th>
+            ${section.columns.map(() => `<th>المبلغ</th><th>الخصم %</th><th>مبلغ الخصم</th>`).join('')}
+          </tr>
+          ${section.rows.map(row => {
+            const rowData = customData[row] || {};
+            return `<tr>
+              <td style="font-weight:bold;">${row}</td>
+              ${section.columns.map(col => {
+                const cell = rowData[col] || {price: 0, discount: 0, discountAmount: 0};
+                return `<td>${cell.price || 0}</td><td>${cell.discount || 0}%</td><td>${cell.discountAmount || 0}</td>`;
+              }).join('')}
+            </tr>`;
+          }).join('')}
+        </table>
+      </div>
+    `;
+  }
+  
+  document.getElementById('detailOverlay').classList.add('active');
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('active');
+}
+
+// ============ تصدير Excel ============
+function exportData() {
+  let csv = '\uFEFF';
+  csv += 'م,اسم المستشفى,الفئة,الفترة,سعر الكشف,خصم اللائحة,خارجي,داخلي,إقامة,جراحين,أتعاب,عناية مركزة,ملاحظات';
+  
+  // Services الداخلي
+  csv += ',عادي-البند,عادي-المبلغ,عادي-الخصم%,عادي-مبلغ_الخصم';
+  csv += ',مركزة-البند,مركزة-المبلغ,مركزة-الخصم%,مركزة-مبلغ_الخصم';
+  
+  // العمليات
+  surgeryLevels.forEach(level => {
+    csv += `,${level.name}-البند,${level.name}-المبلغ,${level.name}-الخصم%,${level.name}-مبلغ_الخصم`;
+  });
+  
+  // البنود المضافة
+  customSections.forEach(section => {
+    section.rows.forEach(row => {
+      section.columns.forEach(col => {
+        csv += `,${section.name}-${row}-${col}-سعر,${section.name}-${row}-${col}-خصم%,${section.name}-${row}-${col}-مبلغ_خصم`;
+      });
+    });
+  });
+  csv += '\n';
+  
+  hospitals.forEach(h => {
+    csv += `${h.id},"${h.name}",${h.category},${h.period||''},${h.fee},${h.listDiscount},${h.outpatient},${h.inpatient},${h.accommodation},${h.surgeons},${h.fees},${h.icu},"${h.notes||''}"`;
+    
+    // Services الداخلي - نأخذ أول 3 بنود فقط للتبسيط
+    const regularItems = h.inpatientServices?.regular || [];
+    const icuItems = h.inpatientServices?.icu || [];
+    
+    for (let i = 0; i < 3; i++) {
+      const r = regularItems[i] || {name:'',price:0,discount:0,discountAmount:0};
+      const ic = icuItems[i] || {name:'',price:0,discount:0,discountAmount:0};
+      csv += `,"${r.name}",${r.price},${r.discount},${r.discountAmount}`;
+      csv += `,"${ic.name}",${ic.price},${ic.discount},${ic.discountAmount}`;
+    }
+    
+    // العمليات - نأخذ أول 4 بنود لكل مستوى
+    surgeryLevels.forEach(level => {
+      const items = h.surgeries?.[level.key] || [];
+      for (let i = 0; i < 4; i++) {
+        const item = items[i] || {name:'',price:0,discount:0,discountAmount:0};
+        csv += `,"${item.name}",${item.price},${item.discount},${item.discountAmount}`;
+      }
+    });
+    
+    // البنود المضافة
+    customSections.forEach(section => {
+      section.rows.forEach(row => {
+        section.columns.forEach(col => {
+          const cell = h.customData?.[section.id]?.[row]?.[col] || {price: 0, discount: 0, discountAmount: 0};
+          csv += `,${cell.price || 0},${cell.discount || 0},${cell.discountAmount || 0}`;
+        });
+      });
+    });
+    csv += '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `مستشفيات_اللوائح_الخاصة_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  alert('✅ تم التصدير بنجاح!');
+}
+
+// ============ استيراد Excel ============
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    if (lines.length < 2) {
+      alert('⚠️ الملف فارغ أو لا يحتوي على بيانات كافية!');
+      return;
+    }
+    
+    const dataLines = lines.slice(1);
+    const importedHospitals = [];
+    
+    dataLines.forEach((line, index) => {
+      const columns = parseCSVLine(line);
+      if (columns.length < 13) return;
+      
+      try {
+        const hospital = createDefaultHospital(
+          parseInt(columns[0]) || (index + 1),
+          columns[1] || '',
+          columns[2] || 'عالية',
+          columns[3] || '',
+          parseFloat(columns[4]) || 0,
+          parseFloat(columns[5]) || 0,
+          parseFloat(columns[6]) || 0,
+          parseFloat(columns[7]) || 0,
+          parseFloat(columns[8]) || 0,
+          parseFloat(columns[9]) || 0,
+          parseFloat(columns[10]) || 0,
+          parseFloat(columns[11]) || 0,
+          columns[12] || ''
+        );
+        
+        importedHospitals.push(hospital);
+      } catch (error) {
+        console.error('خطأ في استيراد الصف', index + 2, error);
+      }
+    });
+    
+    if (importedHospitals.length === 0) {
+      alert('⚠️ لم يتم استيراد أي بيانات! تأكد من تنسيق الملف.');
+      return;
+    }
+    
+    if (confirm(`تم استيراد ${importedHospitals.length} مستشفى بنجاح!\nهل تريد استبدال البيانات الحالية؟`)) {
+      hospitals = importedHospitals;
+      saveToStorage();
+      renderCards();
+      updateStats();
+      alert('✅ تم الاستيراد بنجاح!');
+    }
+  };
+  
+  reader.onerror = function() {
+    alert('❌ خطأ في قراءة الملف!');
+  };
+  
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current.trim());
+  return result;
+}
+
+// ============ التعليمات ============
+function openInstructions() {
+  document.getElementById('instructionsOverlay').classList.add('active');
+}
+
+function closeInstructions() {
+  document.getElementById('instructionsOverlay').classList.remove('active');
+}
+
+// ============ Events ============
+document.getElementById('searchInput').addEventListener('input', renderCards);
+document.getElementById('filterCategory').addEventListener('change', renderCards);
+document.getElementById('filterDiscount').addEventListener('change', renderCards);
+
+// ============ Init ============
+loadData();
+renderCards();
+updateStats();
+</script>
+<script>
+// ============ PWA: تسجيل Service Worker ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.error('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
